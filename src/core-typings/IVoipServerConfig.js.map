@@ -1,0 +1,1 @@
+{"version":3,"file":"IVoipServerConfig.js","sourceRoot":"","sources":["../src/IVoipServerConfig.ts"],"names":[],"mappings":";;;AAEA,IAAY,UAGX;AAHD,WAAY,UAAU;IACrB,uCAAyB,CAAA;IACzB,yCAA2B,CAAA;AAC5B,CAAC,EAHW,UAAU,0BAAV,UAAU,QAGrB;AAwBM,MAAM,uBAAuB,GAAG,CAAC,GAAQ,EAAgC,EAAE,CAAC,MAAM,CAAC,GAAG,CAAC,aAAa,CAAC,KAAK,GAAG,CAAC,aAAa,CAAC;AAAtH,QAAA,uBAAuB,2BAA+F"}
