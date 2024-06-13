@@ -1,9 +1,6 @@
 import * as path from "path";
 import * as fs from "fs";
 import * as ts from "typescript";
-// const fs = require("fs");
-// const path = require("path");
-// const ts = require("typescript");
 
 function isDefined<T>(x: T | undefined): x is T {
   return typeof x !== "undefined";
@@ -28,5 +25,27 @@ let files = program
 
 files = [...files].filter( f => f.fileName.includes("types"));
 
-console.log(files);
+files.map(file => {
+  console.log(file);
+})
+
+// get checker and symbol
+const checker = program.getTypeChecker();
+
+const sfSymbols = files
+  .map(f => checker.getSymbolAtLocation(f))
+  .filter(isDefined);
+  
+
+// for each source file symbol
+sfSymbols.forEach(sfSymbol => {
+  // console.log(sfSymbol);
+  
+  // sfSymbol.exports?.forEach(ex => {
+  //   if(ex.escapedName==="RoomsEndpoints"){
+  //     console.log(ex.declarations[0].type);
+  //   }
+  // });
+  
+})
 
