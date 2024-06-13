@@ -2,7 +2,7 @@ import { IRoom, IUser, IUpload, IMessage, RoomAdminFieldsType } from '../core-ty
 
 import type { PaginatedRequest } from '../helpers/PaginatedRequest';
 import type { PaginatedResult } from '../helpers/PaginatedResult';
-import { ajv } from './Ajv';
+import { ajv } from '../helpers/Ajv';
 
 type RoomsAutoCompleteChannelAndPrivateProps = { selector: string };
 
