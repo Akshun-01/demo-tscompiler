@@ -14,6 +14,35 @@ if (!fileContent) {
 // Create a SourceFile object
 const sourceFile = ts.createSourceFile(fileName, fileContent, ts.ScriptTarget.Latest, true);
 
+const program = ts.createProgram([fileName],{
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.CommonJS
+})
+
+const checker = program.getTypeChecker();
+
+const processedTypes = new Map<string, any>(); // Cache for already processed types
+
+
+//Function to extract Data from Referenced Endpoints 
+const extractReferencedNode = (typeNode: ts.TypeReferenceNode | undefined) => {
+    const temp:any = {};
+    if(!typeNode) return temp;
+
+    const type = checker.getTypeAtLocation(typeNode)
+    console.log(`type: ${JSON.stringify(type)}`);
+    if (!type) return typeNode.getText();
+
+    const symbol = type.aliasSymbol;
+    console.log(`symbol: ${JSON.stringify(symbol)}`);
+    if(!symbol) return typeNode.getText();
+
+    // Now Extract data according to AST and add it to the object.
+    //Look from alias symbol next.
+    
+    return temp;
+}
+
 // Function to extract endpoints from the AST
 const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
     if (ts.isTypeAliasDeclaration(node) && node.name.escapedText === 'RoomsEndpoints') { // Here rather than RomsEndpoints use ReGex 
@@ -36,9 +65,9 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                             let paramType;
                             if(ts.isTypeReferenceNode(param.type)){ // handle case when parameters are not given directly
                                 paramType = param.type as ts.TypeReferenceNode;
-                                params = paramType.typeName?.getText();
-                                // rather than getText() here try to use `Alias Symbol` to get the definitaion from the function.
-                                // Then we can get its children through recursion
+                                // params = paramType.typeName?.getText();
+                                const temp = extractReferencedNode(paramType);
+                                Object.assign(params, temp);
                             }else{
                                 paramType = param.type as ts.TypeLiteralNode;
                                 if(typeof(paramType.members)==="object"){
