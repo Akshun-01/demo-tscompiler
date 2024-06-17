@@ -31,14 +31,31 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                         const methodName = methodMember.name.escapedText as string;
                         const method = methodMember.type as ts.FunctionTypeNode;
 
-                        let params; // change it to object and add params as key val;                        
+                        let params = {}; // change it to object and add params as key val;                        
                         method.parameters.map(param => {
-                            const paramType = param.type as ts.TypeReferenceNode;
-                            params = paramType.typeName?.getText();
-                            // rather than getText() here try to use `Alias Symbol` to get the definitaion from the function.
-                            // Then we can get its children through recursion
+                            let paramType;
+                            if(ts.isTypeReferenceNode(param.type)){ // handle case when parameters are not given directly
+                                paramType = param.type as ts.TypeReferenceNode;
+                                params = paramType.typeName?.getText();
+                                // rather than getText() here try to use `Alias Symbol` to get the definitaion from the function.
+                                // Then we can get its children through recursion
+                            }else{
+                                paramType = param.type as ts.TypeLiteralNode;
+                                if(typeof(paramType.members)==="object"){
+                                    paramType.members.forEach(paramMember => {
+                                        if(ts.isPropertySignature(paramMember) && paramMember.name && ts.isIdentifier(paramMember.name)){
+                                            const paramKey = paramMember.name.escapedText as string;
+                                            const paramValue = paramMember.type?.getText();
+    
+                                            const temp:any = {};
+                                            temp[paramKey] = paramValue;
+                                            Object.assign(params, temp);
+                                        }
+                                    })
+                                }
+                            }
                         });
-                        // console.log(`params: ${params}`);
+                        // console.log(`params: ${JSON.stringify(params)}`);
 
                         const responseType = method.type as ts.TypeLiteralNode;
 
@@ -52,7 +69,7 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                                     const resType = res.type as ts.ArrayTypeNode;
                                     const val = resType.getText();
                                     // console.log(`key: ${key}, val: ${val}`);
-                                    const temp = {};
+                                    const temp:any = {};
                                     temp[key] = val;
                                     Object.assign(response, temp);
                                 }
@@ -82,7 +99,7 @@ for(var key in endpoints){
     
     for(var k in endpoints[key]){
         console.log(`method: ${k}`);
-        console.log(`params: ${endpoints[key][k].params}`);
+        console.log(`params: ${JSON.stringify(endpoints[key][k].params)}`);
 
         console.log(`response: ${JSON.stringify(endpoints[key][k].response)}`);
         
