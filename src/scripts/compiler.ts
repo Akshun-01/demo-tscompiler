@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as ts from 'typescript';
+import { isSymbolObject } from "util/types";
 
 const fileName = path.join(__dirname, '../types/room.ts');
 
@@ -21,8 +22,8 @@ const program = ts.createProgram([fileName],{
 
 const checker = program.getTypeChecker();
 
-const processedTypes = new Map<string, any>(); // Cache for already processed types
-
+// Add cache for already processed types
+const processedTypes = new Map<string, any>(); 
 
 //Function to extract Data from Referenced Endpoints 
 const extractReferencedNode = (typeNode: ts.TypeReferenceNode | undefined) => {
@@ -30,15 +31,34 @@ const extractReferencedNode = (typeNode: ts.TypeReferenceNode | undefined) => {
     if(!typeNode) return temp;
 
     const type = checker.getTypeAtLocation(typeNode)
-    console.log(`type: ${JSON.stringify(type)}`);
     if (!type) return typeNode.getText();
 
-    const symbol = type.aliasSymbol;
-    console.log(`symbol: ${JSON.stringify(symbol)}`);
-    if(!symbol) return typeNode.getText();
+    const aliasSymbol = type.aliasSymbol;
+    if(!aliasSymbol) return typeNode.getText();
 
-    // Now Extract data according to AST and add it to the object.
-    //Look from alias symbol next.
+    // find a way to get the properties using the symbol
+    console.log(aliasSymbol);
+    
+    // const declarations =  aliasSymbol.valueDeclaration;
+    // console.log(declarations); // currently undefined
+    // console.log('\n\n');
+    
+    
+
+    // if (!declarations || declarations.length === 0) {
+    //     console.log("no declaration found");
+    //     return typeNode.getText();
+    // }
+    
+    
+    // symbol.declarations.forEach(symbolMember => {
+    //     if(ts.isTypeAliasDeclaration(symbolMember) && ts.isIdentifier(symbolMember.name)){
+    //         const symbolType = symbolMember.type as ts.TypeLiteralNode;
+    //         Object.assign(temp, symbolType.getText());
+    //         console.log(`property: ${symbolType.getText()}`);
+    //     }
+    // })
+    
     
     return temp;
 }
@@ -65,9 +85,9 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                             let paramType;
                             if(ts.isTypeReferenceNode(param.type)){ // handle case when parameters are not given directly
                                 paramType = param.type as ts.TypeReferenceNode;
-                                // params = paramType.typeName?.getText();
-                                const temp = extractReferencedNode(paramType);
-                                Object.assign(params, temp);
+                                params = paramType.typeName?.getText();
+                                // const temp = extractReferencedNode(paramType);
+                                // Object.assign(params, temp);
                             }else{
                                 paramType = param.type as ts.TypeLiteralNode;
                                 if(typeof(paramType.members)==="object"){
@@ -121,17 +141,19 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
 const endpoints = {};
 extractEndpoints(sourceFile, endpoints);
 
+module.exports =  endpoints;
+
 // console.log(JSON.stringify(endpoints, null, 2));
-
-for(var key in endpoints){
-    console.log(`endpoint: ${key}`); 
+// const openSpecRoomData; // use it to store all the data, so that it can be used in openapi3-ts
+// for(var key in endpoints){
+//     console.log(`endpoint: ${key}`); 
     
-    for(var k in endpoints[key]){
-        console.log(`method: ${k}`);
-        console.log(`params: ${JSON.stringify(endpoints[key][k].params)}`);
+//     for(var k in endpoints[key]){
+//         console.log(`method: ${k}`);
+//         console.log(`params: ${JSON.stringify(endpoints[key][k].params)}`);
 
-        console.log(`response: ${JSON.stringify(endpoints[key][k].response)}`);
+//         console.log(`response: ${JSON.stringify(endpoints[key][k].response)}`);
         
-    }
-    console.log('\n\n');   
-}
+//     }
+//     console.log('\n\n');   
+// }
