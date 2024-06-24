@@ -2,7 +2,7 @@ import * as path from "path";
 import * as ts from 'typescript';
 import { isSymbolObject } from "util/types";
 
-const fileName = path.join(__dirname, '../types/room.ts');
+const fileName = path.join(__dirname, '../scripts/sourcefiles.ts');
 
 // Read the file content
 const fileContent = ts.sys.readFile(fileName);
@@ -38,34 +38,15 @@ const extractReferencedNode = (typeNode: ts.TypeReferenceNode | undefined) => {
 
     // find a way to get the properties using the symbol
     console.log(aliasSymbol);
-    
-    // const declarations =  aliasSymbol.valueDeclaration;
-    // console.log(declarations); // currently undefined
-    // console.log('\n\n');
-    
-    
-
-    // if (!declarations || declarations.length === 0) {
-    //     console.log("no declaration found");
-    //     return typeNode.getText();
-    // }
-    
-    
-    // symbol.declarations.forEach(symbolMember => {
-    //     if(ts.isTypeAliasDeclaration(symbolMember) && ts.isIdentifier(symbolMember.name)){
-    //         const symbolType = symbolMember.type as ts.TypeLiteralNode;
-    //         Object.assign(temp, symbolType.getText());
-    //         console.log(`property: ${symbolType.getText()}`);
-    //     }
-    // })
-    
-    
+        
     return temp;
 }
 
 // Function to extract endpoints from the AST
 const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
-    if (ts.isTypeAliasDeclaration(node) && node.name.escapedText === 'RoomsEndpoints') { // Here rather than RomsEndpoints use ReGex 
+    const regex = /.*Endpoints$/;
+
+    if (ts.isTypeAliasDeclaration(node) && regex.test(node.name.text)) {
         const typeLiteral = node.type as ts.TypeLiteralNode;
 
         typeLiteral.members.forEach(member => {
@@ -138,8 +119,28 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
     ts.forEachChild(node, childNode => extractEndpoints(childNode, endpoints));
 };
 
-const endpoints = {};
-extractEndpoints(sourceFile, endpoints);
+function getFormatedFilename(path:string) {
+    // Extract the last part of the path
+    const parts = path.split('/');
+    const filenameWithExtension = parts.pop();
+  
+    // Remove the file extension
+    if(!filenameWithExtension) return "noName";
+    const filename = filenameWithExtension.replace(/\.[^/.]+$/, "Endpoints");
+  
+    return filename;
+}
+
+const endpoints:any = {};
+program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
+    const filename = getFormatedFilename(f.fileName);
+    const temp = {};
+    extractEndpoints(f, temp);
+    
+    if(Object.keys(temp).length) endpoints[filename] = temp;
+});
+
+// console.log(JSON.stringify(endpoints));
 
 module.exports =  endpoints;
 

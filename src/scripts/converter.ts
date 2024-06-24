@@ -2,17 +2,21 @@ import { oas31 } from 'openapi3-ts';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const apiData = require('./compiler')
+const apiData:ApiData = require('./compiler')
 
-interface MethodData {
-    params: string | Record<string, string>;
-    response: Record<string, string>;
+export interface MethodData {
+    params?: Record<string, string> | string;
+    response?: Record<string, string>;
 }
 
-interface ApiData {
+export interface Endpoints {
     [endpoint: string]: {
         [method: string]: MethodData;
     };
+}
+
+export interface ApiData {
+    [section: string]: Endpoints;
 }
 
 // Function to create a basic OpenAPI template
@@ -24,64 +28,64 @@ const createBasicTemplate = (): oas31.OpenAPIObject => {
             version: '1.0.0',
             description: 'This is a sample API'
         },
-        // servers: [
-        //     {
-        //         url: 'https://api.example.com'
-        //     }
-        // ],
         paths: {}
     };
 };
 
-// Function to generate OpenAPI documentation based on provided API data
-const generateApiDoc = (apiData: ApiData): oas31.OpenAPIObject => {
-    const openApiTemplate = createBasicTemplate();
+// Function to process and add endpoints to the OpenAPI spec
+const processEndpoints = (endpoints: Endpoints, tag: string): Record<string, PathItemObject> => {
+    const paths: Record<string, PathItemObject> = {};
 
-    for (const [endpoint, methods] of Object.entries(apiData)) {
-        const pathItem: oas31.PathItemObject = {};
+    for (const [endpoint, methods] of Object.entries(endpoints)) {
+        const pathItem: PathItemObject = {};
 
         for (const [method, methodData] of Object.entries(methods)) {
-            const requestBodySchema: oas31.SchemaObject = {
+            const requestBodySchema: SchemaObject = {
                 type: 'object',
                 properties: {},
                 required: []
             };
 
-            if (typeof methodData.params === 'string') {
+            if (methodData.params && typeof methodData.params === 'string') {
                 requestBodySchema.properties = {
                     [methodData.params]: { type: 'string' } // Assuming a simple string for the placeholder
                 };
                 requestBodySchema.required = [methodData.params];
-            } else {
+            } else if (methodData.params) {
                 for (const [key, value] of Object.entries(methodData.params)) {
                     const type = value.replace(/\[.*\]/, '').toLowerCase(); // Remove type reference brackets and convert to lower case
-                    requestBodySchema.properties![key] = { type };
+                    requestBodySchema.properties[key] = { type };
                     if (!value.includes('?')) { // Assuming '?' denotes optional params
                         requestBodySchema.required!.push(key);
                     }
                 }
             }
 
-            const responseSchema: oas31.SchemaObject = {
+            const responseSchema: SchemaObject = {
                 type: 'object',
                 properties: {}
             };
 
-            for (const [key, value] of Object.entries(methodData.response)) {
-                const type = value.replace(/\[.*\]/, '').toLowerCase(); // Remove type reference brackets and convert to lower case
-                responseSchema.properties![key] = { type };
+            for (const [key, value] of Object.entries(methodData.response || {})) {
+                let type = value.replace(/\[.*\]/, '').toLowerCase(); // Remove type reference brackets and convert to lower case
+                if (['array', 'boolean', 'integer', 'number', 'object', 'string'].includes(type)) {
+                    responseSchema.properties![key] = { type };
+                } else {
+                    responseSchema.properties![key] = { type: 'object' }; // Default to 'object' if type is unknown
+                }
             }
 
-            const operation: oas31.OperationObject = {
+            const operation: OperationObject = {
                 summary: `${method} ${endpoint}`,
                 operationId: `${method.toLowerCase()}${endpoint.replace(/\//g, '_')}`,
-                requestBody: {
+                tags: [tag],
+                requestBody: method !== 'GET' && Object.keys(requestBodySchema.properties).length ? {
                     content: {
                         'application/json': {
                             schema: requestBodySchema
                         }
                     }
-                },
+                } : undefined,
                 responses: {
                     '200': {
                         description: 'Successful response',
@@ -94,27 +98,36 @@ const generateApiDoc = (apiData: ApiData): oas31.OpenAPIObject => {
                 }
             };
 
-            pathItem[method.toLowerCase()] = operation;
+            pathItem[method.toLowerCase() as keyof PathItemObject] = operation;
         }
 
-        openApiTemplate.paths[endpoint] = pathItem;
+        paths[endpoint] = pathItem;
+    }
+
+    return paths;
+};
+
+// Generate the OpenAPI document
+const generateApiDoc = (apiData: ApiData): OpenAPIObject => {
+    const openApiTemplate = createBasicTemplate();
+
+    for (const [section, endpoints] of Object.entries(apiData)) {
+        const tag = section; // Use the section name as the tag
+        const paths = processEndpoints(endpoints, tag);
+        openApiTemplate.paths = { ...openApiTemplate.paths, ...paths };
     }
 
     return openApiTemplate;
 };
 
 const openApiDoc = generateApiDoc(apiData);
-// console.log(openApiDoc);
 const JsonDoc = JSON.stringify(openApiDoc);
 
-// Define the output folder and file path
+// Code to output generated file to folder
 const outputFolder = path.join(__dirname, '../oas');
-const outputFilePath = path.join(outputFolder, `RoomEndpoints.json`);
+const outputFilePath = path.join(outputFolder, `openapispec.json`);
     
-// Ensure the output folder exists
 if (!fs.existsSync(outputFolder)) {
   fs.mkdirSync(outputFolder);
 }
-// Write the JSON string to the output file
 fs.writeFileSync(outputFilePath, JsonDoc, 'utf-8');
-console.log(`OpenAPI document has been saved to ${outputFilePath}`);
