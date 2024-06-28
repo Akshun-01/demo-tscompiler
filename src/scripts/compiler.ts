@@ -1,10 +1,8 @@
 import * as path from "path";
 import * as ts from 'typescript';
-import { isSymbolObject } from "util/types";
 
 const fileName = path.join(__dirname, '../scripts/sourcefiles.ts');
 
-// Read the file content
 const fileContent = ts.sys.readFile(fileName);
 
 if (!fileContent) {
@@ -12,7 +10,6 @@ if (!fileContent) {
     process.exit(1);
 }
 
-// Create a SourceFile object
 const sourceFile = ts.createSourceFile(fileName, fileContent, ts.ScriptTarget.Latest, true);
 
 const program = ts.createProgram([fileName],{
@@ -26,20 +23,56 @@ const checker = program.getTypeChecker();
 const processedTypes = new Map<string, any>(); 
 
 //Function to extract Data from Referenced Endpoints 
-const extractReferencedNode = (typeNode: ts.TypeReferenceNode | undefined) => {
-    const temp:any = {};
-    if(!typeNode) return temp;
+const extractReferencedNode = (typeNode: ts.Identifier) => {
+    if(!typeNode) return {};
 
-    const type = checker.getTypeAtLocation(typeNode)
-    if (!type) return typeNode.getText();
+    let params:any = {};
+    const symbol = checker.getSymbolAtLocation(typeNode)
+    if (!symbol) return typeNode.getText();
 
-    const aliasSymbol = type.aliasSymbol;
-    if(!aliasSymbol) return typeNode.getText();
+    // need to check if "aliasSymbol" exists from the getTypeAtLocation() function
+    // if symbol and aliasSymbol are different first get the referenced parent symbol then parse
 
-    // find a way to get the properties using the symbol
-    console.log(aliasSymbol);
+    symbol.declarations?.map(sym => {
+        if(ts.isTypeAliasDeclaration(sym) && sym.name && ts.isIdentifier(sym.name)){
+            let temp:any = {};
+
+            // handle case for union type also, and these types can be nested so its better to write a recursive function rather than handling with if else // 
+            if(ts.isTypeReferenceNode(sym.type)){
+                const symbolType = sym.type as ts.TypeReferenceNode;            
+
+                symbolType.typeArguments?.forEach(symbolTypeArguments => {
+                    if(ts.isTypeLiteralNode(symbolTypeArguments)){
+                        symbolTypeArguments.members.forEach(symbolMember => {
+                            if(ts.isPropertySignature(symbolMember) && symbolMember.name && ts.isIdentifier(symbolMember.name)){
+                                const key = symbolMember.name.text;
+                                const type = checker.getTypeAtLocation(symbolMember.type!)
+                                const value = checker.typeToString(type);
+                                temp[key] = value;
+                                
+                                Object.assign(params, temp);
+                            }
+                        })
+                    }
+                })
+            }else{
+                const symbolType = sym.type as ts.TypeLiteralNode; 
+    
+                symbolType.members?.forEach(symbolMember => {
+                    if(ts.isPropertySignature(symbolMember) && symbolMember.name && ts.isIdentifier(symbolMember.name)){
+                        const key = symbolMember.name.text;
+                        const type = checker.getTypeAtLocation(symbolMember.type!)
+                        const value = checker.typeToString(type);
+                        temp[key] = value;
+                        
+                        Object.assign(params, temp);
+                    }
+                })
+            }
+        }
+    })    
         
-    return temp;
+    return params;
 }
 
 // Function to extract endpoints from the AST
@@ -61,16 +94,17 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                         const methodName = methodMember.name.escapedText as string;
                         const method = methodMember.type as ts.FunctionTypeNode;
 
-                        let params = {}; // change it to object and add params as key val;                        
+                        let params = {};                       
                         method.parameters.map(param => {
-                            let paramType;
-                            if(ts.isTypeReferenceNode(param.type)){ // handle case when parameters are not given directly
-                                paramType = param.type as ts.TypeReferenceNode;
-                                params = paramType.typeName?.getText();
-                                // const temp = extractReferencedNode(paramType);
-                                // Object.assign(params, temp);
+                            if(ts.isTypeReferenceNode(param.type!)){ // handle case when parameters are not given directly
+                                const paramType = param.type as ts.TypeReferenceNode;
+                                const paramTypeName = paramType.typeName as ts.Identifier;
+                                
+                                const paramMembers = extractReferencedNode(paramTypeName);
+                                Object.assign(params, paramMembers);
                             }else{
-                                paramType = param.type as ts.TypeLiteralNode;
+                                const paramType = param.type as ts.TypeLiteralNode;
+                                // check if nested objects are getting parsed, if not convert this into a function and use recursion // 
                                 if(typeof(paramType.members)==="object"){
                                     paramType.members.forEach(paramMember => {
                                         if(ts.isPropertySignature(paramMember) && paramMember.name && ts.isIdentifier(paramMember.name)){
@@ -85,20 +119,18 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                                 }
                             }
                         });
-                        // console.log(`params: ${JSON.stringify(params)}`);
 
                         const responseType = method.type as ts.TypeLiteralNode;
 
                         let response: any = {};
-                        // console.log(typeof(responseType.members));
+                        // check if nested objects are getting parsed, if not convert this into a function and use recursion //
                         if(typeof(responseType.members)==="object"){
                             responseType.members.map( res => {
-                                // response obj for each member and add it to some parent response object //
                                 if(ts.isPropertySignature(res) && res.name && ts.isIdentifier(res.name)){
                                     const key = res.name?.getText();
                                     const resType = res.type as ts.ArrayTypeNode;
                                     const val = resType.getText();
-                                    // console.log(`key: ${key}, val: ${val}`);
+                                    
                                     const temp:any = {};
                                     temp[key] = val;
                                     Object.assign(response, temp);
@@ -120,12 +152,10 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
 };
 
 function getFormatedFilename(path:string) {
-    // Extract the last part of the path
     const parts = path.split('/');
     const filenameWithExtension = parts.pop();
   
-    // Remove the file extension
-    if(!filenameWithExtension) return "noName";
+    if(!filenameWithExtension) return console.error("No fileName Found");
     const filename = filenameWithExtension.replace(/\.[^/.]+$/, "Endpoints");
   
     return filename;
@@ -133,28 +163,13 @@ function getFormatedFilename(path:string) {
 
 const endpoints:any = {};
 program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
-    const filename = getFormatedFilename(f.fileName);
+    const filename:string = getFormatedFilename(f.fileName) as string;
     const temp = {};
     extractEndpoints(f, temp);
     
     if(Object.keys(temp).length) endpoints[filename] = temp;
 });
 
-// console.log(JSON.stringify(endpoints));
+console.log(JSON.stringify(endpoints));
 
 module.exports =  endpoints;
-
-// console.log(JSON.stringify(endpoints, null, 2));
-// const openSpecRoomData; // use it to store all the data, so that it can be used in openapi3-ts
-// for(var key in endpoints){
-//     console.log(`endpoint: ${key}`); 
-    
-//     for(var k in endpoints[key]){
-//         console.log(`method: ${k}`);
-//         console.log(`params: ${JSON.stringify(endpoints[key][k].params)}`);
-
-//         console.log(`response: ${JSON.stringify(endpoints[key][k].response)}`);
-        
-//     }
-//     console.log('\n\n');   
-// }

@@ -13,7 +13,7 @@ interface IRequestTranscript {
     subject: string;
     requestedAt: Date;
     requestedBy: Pick<IUser, '_id' | 'username' | 'name' | 'utcOffset'>;
-}
+} 
 export interface IRoom extends IRocketChatRecord {
     _id: RoomID;
     t: RoomType;

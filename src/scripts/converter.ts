@@ -1,6 +1,7 @@
 import { oas31 } from 'openapi3-ts';
 import * as fs from 'fs';
 import * as path from 'path';
+import { schemas } from './schemas'; 
 
 const apiData:ApiData = require('./compiler')
 
@@ -19,7 +20,7 @@ export interface ApiData {
     [section: string]: Endpoints;
 }
 
-// Function to create a basic OpenAPI template
+// Base Template
 const createBasicTemplate = (): oas31.OpenAPIObject => {
     return {
         openapi: '3.0.0',
@@ -28,19 +29,27 @@ const createBasicTemplate = (): oas31.OpenAPIObject => {
             version: '1.0.0',
             description: 'This is a sample API'
         },
-        paths: {}
+        servers:[{
+            url: "https://apiexplorer.support.rocket.chat/"
+        }],
+        paths: {},
+        components:{
+            schemas: schemas
+        }
     };
 };
 
 // Function to process and add endpoints to the OpenAPI spec
-const processEndpoints = (endpoints: Endpoints, tag: string): Record<string, PathItemObject> => {
-    const paths: Record<string, PathItemObject> = {};
+const processEndpoints = (endpoints: Endpoints, tag: string): Record<string, oas31.PathItemObject> => {
+    const paths: Record<string, oas31.PathItemObject> = {};
 
     for (const [endpoint, methods] of Object.entries(endpoints)) {
-        const pathItem: PathItemObject = {};
+        const pathItem: oas31.PathItemObject = {};
 
+        // add parameters //
+        
         for (const [method, methodData] of Object.entries(methods)) {
-            const requestBodySchema: SchemaObject = {
+            const requestBodySchema: oas31.SchemaObject = {
                 type: 'object',
                 properties: {},
                 required: []
@@ -48,36 +57,38 @@ const processEndpoints = (endpoints: Endpoints, tag: string): Record<string, Pat
 
             if (methodData.params && typeof methodData.params === 'string') {
                 requestBodySchema.properties = {
-                    [methodData.params]: { type: 'string' } // Assuming a simple string for the placeholder
+                    [methodData.params]: { type: 'string' } // Temporary for now, add recurrsion later and update
                 };
                 requestBodySchema.required = [methodData.params];
             } else if (methodData.params) {
-                for (const [key, value] of Object.entries(methodData.params)) {
-                    const type = value.replace(/\[.*\]/, '').toLowerCase(); // Remove type reference brackets and convert to lower case
-                    requestBodySchema.properties[key] = { type };
-                    if (!value.includes('?')) { // Assuming '?' denotes optional params
+                for (const [key, value] of Object.entries(methodData.params)) { 
+                    requestBodySchema.properties![key] = { value };
+                    
+                    /* can add ?: to make param optional */
+                    if (!value.includes('?')) {
                         requestBodySchema.required!.push(key);
                     }
                 }
             }
 
-            const responseSchema: SchemaObject = {
+            const responseSchema: oas31.SchemaObject = {
                 type: 'object',
                 properties: {}
             };
 
             for (const [key, value] of Object.entries(methodData.response || {})) {
-                let type = value.replace(/\[.*\]/, '').toLowerCase(); // Remove type reference brackets and convert to lower case
-                if (['array', 'boolean', 'integer', 'number', 'object', 'string'].includes(type)) {
-                    responseSchema.properties![key] = { type };
-                } else {
-                    responseSchema.properties![key] = { type: 'object' }; // Default to 'object' if type is unknown
+                let $ref = value;
+                // use logic here: If it starts with "I" the use appropriate schema, if it has ["id"] parse it as string //
+                if(["IRoom[]", "IRoom"].includes(value)){
+                    $ref = "#/components/schemas/IRoom"
+                }else if(["IUser[]", "IUser"].includes(value)){
+                    $ref = "#/components/schemas/IUser"
                 }
+                responseSchema.properties![key] = { $ref };
             }
 
-            const operation: OperationObject = {
+            const operation: oas31.OperationObject = {
                 summary: `${method} ${endpoint}`,
-                operationId: `${method.toLowerCase()}${endpoint.replace(/\//g, '_')}`,
                 tags: [tag],
                 requestBody: method !== 'GET' && Object.keys(requestBodySchema.properties).length ? {
                     content: {
@@ -108,13 +119,13 @@ const processEndpoints = (endpoints: Endpoints, tag: string): Record<string, Pat
 };
 
 // Generate the OpenAPI document
-const generateApiDoc = (apiData: ApiData): OpenAPIObject => {
+const generateApiDoc = (apiData: ApiData): oas31.OpenAPIObject => {
     const openApiTemplate = createBasicTemplate();
 
     for (const [section, endpoints] of Object.entries(apiData)) {
-        const tag = section; // Use the section name as the tag
+        const tag = section;
         const paths = processEndpoints(endpoints, tag);
-        openApiTemplate.paths = { ...openApiTemplate.paths, ...paths };
+        openApiTemplate.paths = { ...openApiTemplate.paths, ...paths }; 
     }
 
     return openApiTemplate;
