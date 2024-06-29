@@ -140,7 +140,7 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
                             }
                         }else if(ts.isUnionTypeNode(method.type)){
                             const responseTypes = method.type as ts.UnionTypeNode;
-                            
+
                             const types:any = [];
                             responseTypes.types.forEach(responseType => {
                                 let temp:any = {}
@@ -198,7 +198,7 @@ program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
     if(Object.keys(temp).length) endpoints[filename] = temp;
 });
 
-console.log(JSON.stringify(endpoints));
+// console.log(JSON.stringify(endpoints));
 
 module.exports =  endpoints;
 
