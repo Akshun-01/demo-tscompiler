@@ -198,10 +198,11 @@ program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
     if(Object.keys(temp).length) endpoints[filename] = temp;
 });
 
-// console.log(JSON.stringify(endpoints));
+console.log(JSON.stringify(endpoints));
 
 module.exports =  endpoints;
 
 // TODO:
-// first handle AliasSymbol and Union Type
+// Handle AliasSymbol
+// Refactor Code with better functions
 // Then focus on other edge cases like PaginatedResults

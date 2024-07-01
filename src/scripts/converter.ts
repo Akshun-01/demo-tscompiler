@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { schemas } from './schemas';
 
-const apiData: ApiData = require('./compiler');
+const apiData: ApiData = require('./expCompiler');
 
 export interface MethodData {
     params?: Record<string, string>;

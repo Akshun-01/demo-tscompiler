@@ -178,7 +178,9 @@
                   },
                   "users": {
                     "type": "array",
-                    "items": {}
+                    "items": {
+                      "type": "string"
+                    }
                   },
                   "limit": {
                     "type": "integer",
@@ -1019,8 +1021,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UsersSendConfirmationEmailParamsPOST": {}
+                },
+                "required": [
+                  "UsersSendConfirmationEmailParamsPOST"
+                ]
               }
             }
           }
@@ -1044,7 +1050,14 @@
         "tags": [
           "usersEndpoints"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "UsersListTeamsParamsGET",
+            "in": "query",
+            "required": true,
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -1064,7 +1077,14 @@
         "tags": [
           "usersEndpoints"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "UsersAutocompleteParamsGET",
+            "in": "query",
+            "required": true,
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -1084,7 +1104,14 @@
         "tags": [
           "usersEndpoints"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "PaginatedRequest",
+            "in": "query",
+            "required": true,
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -1104,7 +1131,14 @@
         "tags": [
           "usersEndpoints"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "UsersListStatusParamsGET",
+            "in": "query",
+            "required": true,
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -1129,8 +1163,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UsersSendWelcomeEmailParamsPOST": {}
+                },
+                "required": [
+                  "UsersSendWelcomeEmailParamsPOST"
+                ]
               }
             }
           }
@@ -1729,8 +1767,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UserCreateParamsPOST": {}
+                },
+                "required": [
+                  "UserCreateParamsPOST"
+                ]
               }
             }
           }
@@ -1759,8 +1801,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UsersUpdateParamsPOST": {}
+                },
+                "required": [
+                  "UsersUpdateParamsPOST"
+                ]
               }
             }
           }
@@ -1789,8 +1835,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UserSetActiveStatusParamsPOST": {}
+                },
+                "required": [
+                  "UserSetActiveStatusParamsPOST"
+                ]
               }
             }
           }
@@ -1819,8 +1869,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UserDeactivateIdleParamsPOST": {}
+                },
+                "required": [
+                  "UserDeactivateIdleParamsPOST"
+                ]
               }
             }
           }
@@ -1934,7 +1988,14 @@
         "tags": [
           "usersEndpoints"
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "UsersInfoParamsGet",
+            "in": "query",
+            "required": true,
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -1959,8 +2020,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UserRegisterParamsPOST": {}
+                },
+                "required": [
+                  "UserRegisterParamsPOST"
+                ]
               }
             }
           }
@@ -1989,8 +2054,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UserLogoutParamsPOST": {}
+                },
+                "required": [
+                  "UserLogoutParamsPOST"
+                ]
               }
             }
           }
@@ -2019,8 +2088,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UsersSetPreferencesParamsPOST": {}
+                },
+                "required": [
+                  "UsersSetPreferencesParamsPOST"
+                ]
               }
             }
           }
@@ -2050,7 +2123,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "userId": {},
+                  "userId": {
+                    "type": "string"
+                  },
                   "confirmRelinquish": {
                     "type": "boolean"
                   }
@@ -2132,8 +2207,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {},
-                "required": []
+                "properties": {
+                  "UsersUpdateOwnBasicInfoParamsPOST": {}
+                },
+                "required": [
+                  "UsersUpdateOwnBasicInfoParamsPOST"
+                ]
               }
             }
           }
