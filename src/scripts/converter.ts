@@ -85,28 +85,23 @@ const createRequestBodySchema = (params: Record<string, string>): oas31.SchemaOb
 
 // Helper function to create a schema object for responses
 const createResponseSchema = (response: Record<string, any>): oas31.SchemaObject => {
-    const unionSchemas: oas31.SchemaObject[] = [];
-    for (const [key, value] of Object.entries(response)) {
-        if (typeof value === 'object' && value !== null) {
-            const schema: oas31.SchemaObject = { type: 'object', properties: {} };
-            for (const [subKey, subValue] of Object.entries(value)) {
-                const isArray = subValue.endsWith('[]');
-                const type = paramTypeMap[isArray ? subValue.slice(0, -2) : subValue];
-                schema.properties![subKey] = {
-                    type: isArray ? 'array' : type,
-                    format: paramFormatMap[type],
-                    ...(isArray ? { items: { type } } : {})
-                };
-            }
-            unionSchemas.push(schema);
-        } else if (value === 'void') {
-            unionSchemas.push({ type: 'null' });
+    const responseSchema: oas31.SchemaObject = {
+        type: 'object',
+        properties: {}
+    };
+
+    for (const [key, value] of Object.entries(response || {})) {
+        let $ref = value;
+        // use logic here: If it starts with "I" the use appropriate schema, if it has ["id"] parse it as string //
+        if(["IRoom[]", "IRoom"].includes(value)){
+            $ref = "#/components/schemas/IRoom"
+        }else if(["IUser[]", "IUser"].includes(value)){
+            $ref = "#/components/schemas/IUser"
         }
+        responseSchema.properties![key] = { $ref };
     }
-    if (unionSchemas.length === 1) {
-        return unionSchemas[0];
-    }
-    return { oneOf: unionSchemas };
+
+    return responseSchema;
 };
 
 // Function to process and add endpoints to the OpenAPI spec

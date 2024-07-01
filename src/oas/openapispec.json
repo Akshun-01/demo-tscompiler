@@ -32,7 +32,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -61,7 +66,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "$ref": "#/components/schemas/IRoom"
+                    },
+                    "total": {
+                      "$ref": "number"
+                    }
+                  }
                 }
               }
             }
@@ -90,7 +103,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -119,7 +137,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -139,7 +162,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "room": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -215,7 +243,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "_id": {
+                      "$ref": "string"
+                    },
+                    "count": {
+                      "$ref": "number"
+                    },
+                    "success": {
+                      "$ref": "boolean"
+                    }
+                  }
                 }
               }
             }
@@ -278,7 +317,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "discussion": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -308,25 +352,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "missing": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "success": {
-                          "type": "boolean"
-                        }
+                  "type": "object",
+                  "properties": {
+                    "0": {
+                      "$ref": {
+                        "missing": "string[]",
+                        "success": "boolean"
                       }
                     },
-                    {
-                      "type": "null"
+                    "1": {
+                      "$ref": "void"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -366,7 +403,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "rooms": {
+                      "$ref": "Pick<IRoom, RoomAdminFieldsType>[]"
+                    }
+                  }
                 }
               }
             }
@@ -395,7 +437,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -474,7 +517,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "$ref": "boolean"
+                    },
+                    "rid": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -514,7 +565,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "$ref": "boolean"
+                    }
+                  }
                 }
               }
             }
@@ -580,7 +636,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "$ref": "IMessage"
+                    }
+                  }
                 }
               }
             }
@@ -618,7 +679,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -648,7 +710,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -677,7 +740,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "exists": {
+                      "$ref": "boolean"
+                    }
+                  }
                 }
               }
             }
@@ -713,7 +781,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -742,7 +811,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "update": {
+                      "$ref": "#/components/schemas/IRoom"
+                    },
+                    "remove": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -772,7 +849,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -792,7 +870,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "discussions": {
+                      "$ref": "#/components/schemas/IRoom"
+                    }
+                  }
                 }
               }
             }
@@ -822,7 +905,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -852,7 +936,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -907,7 +992,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "files": {
+                      "$ref": "IUpload[]"
+                    }
+                  }
                 }
               }
             }
@@ -937,7 +1027,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -967,7 +1058,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1003,7 +1095,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1037,7 +1130,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1064,7 +1158,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "teams": {
+                      "$ref": "ITeam[]"
+                    }
+                  }
                 }
               }
             }
@@ -1091,7 +1190,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "$ref": "Required<Pick<IUser, \"_id\" | \"username\" | \"name\" | \"avatarETag\" | \"nickname\" | \"status\">>[]"
+                    }
+                  }
                 }
               }
             }
@@ -1118,7 +1222,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "$ref": "DefaultUserInfo[]"
+                    }
+                  }
                 }
               }
             }
@@ -1145,7 +1254,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "$ref": "DefaultUserInfo[]"
+                    }
+                  }
                 }
               }
             }
@@ -1179,7 +1293,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1223,7 +1338,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1263,7 +1379,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1290,7 +1407,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "requested": {
+                      "$ref": "boolean"
+                    },
+                    "exportOperation": {
+                      "$ref": "IExportOperation"
+                    }
+                  }
                 }
               }
             }
@@ -1320,7 +1445,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "$ref": "string"
+                    },
+                    "tokenExpires": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -1350,7 +1483,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1380,7 +1514,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1410,7 +1545,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1448,7 +1584,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1484,7 +1621,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1504,7 +1642,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "tokens": {
+                      "$ref": "UserPersonalTokens[]"
+                    }
+                  }
                 }
               }
             }
@@ -1540,7 +1683,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -1580,7 +1728,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -1600,7 +1753,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -1620,7 +1778,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {
+                      "$ref": "Record<string, { blob: string; contentType: string; service: string; url: string; }>"
+                    }
+                  }
                 }
               }
             }
@@ -1649,7 +1812,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "$ref": "boolean"
+                    }
+                  }
                 }
               }
             }
@@ -1685,7 +1853,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1705,7 +1874,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "preferences": {
+                      "$ref": "{ [key: string]: any; }"
+                    }
+                  }
                 }
               }
             }
@@ -1749,7 +1923,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "{ userId: string; authToken: string; }"
+                    }
+                  }
                 }
               }
             }
@@ -1783,7 +1962,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/IUser"
+                    }
+                  }
                 }
               }
             }
@@ -1817,7 +2001,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/IUser"
+                    }
+                  }
                 }
               }
             }
@@ -1851,7 +2040,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/IUser"
+                    }
+                  }
                 }
               }
             }
@@ -1885,7 +2079,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "$ref": "number"
+                    }
+                  }
                 }
               }
             }
@@ -1905,7 +2104,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "presence": {
+                      "$ref": "UserStatus"
+                    },
+                    "connectionStatus": {
+                      "$ref": "\"online\" | \"offline\" | \"away\" | \"busy\""
+                    },
+                    "lastLogin": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -1955,7 +2165,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -1975,7 +2186,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "$ref": "\"online\" | \"offline\" | \"away\" | \"busy\""
+                    },
+                    "message": {
+                      "$ref": "string"
+                    },
+                    "_id": {
+                      "$ref": "string"
+                    },
+                    "connectionStatus": {
+                      "$ref": "\"online\" | \"offline\" | \"away\" | \"busy\""
+                    }
+                  }
                 }
               }
             }
@@ -2002,7 +2227,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "IUser & { rooms?: Pick<ISubscription, \"name\" | \"t\" | \"roles\" | \"rid\" | \"unread\">[]; }"
+                    }
+                  }
                 }
               }
             }
@@ -2036,7 +2266,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "Partial<IUser>"
+                    }
+                  }
                 }
               }
             }
@@ -2070,7 +2305,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "$ref": "string"
+                    }
+                  }
                 }
               }
             }
@@ -2104,7 +2344,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "Required<Pick<IUser, \"_id\" | \"settings\">>"
+                    }
+                  }
                 }
               }
             }
@@ -2144,7 +2389,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -2189,7 +2435,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
@@ -2223,7 +2470,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/IUser"
+                    }
+                  }
                 }
               }
             }
@@ -2263,7 +2515,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": []
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }

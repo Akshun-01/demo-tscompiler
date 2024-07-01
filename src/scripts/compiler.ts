@@ -198,7 +198,7 @@ program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
     if(Object.keys(temp).length) endpoints[filename] = temp;
 });
 
-console.log(JSON.stringify(endpoints));
+// console.log(JSON.stringify(endpoints));
 
 module.exports =  endpoints;
 
