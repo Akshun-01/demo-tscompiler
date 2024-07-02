@@ -121,7 +121,13 @@ const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
 
                         let response: any = {};
                         // can also be of union type //
-                        if(ts.isTypeLiteralNode(method.type)){
+                        if(ts.isTypeReferenceNode(method.type)){
+                            // here we we handle IMessage and PaginatedResults
+                            const responseType = method.type as ts.TypeReferenceNode;
+                            const value = responseType.getText();
+                            
+                            response = value;
+                        }else if(ts.isTypeLiteralNode(method.type)){
                             const responseType = method.type as ts.TypeLiteralNode;
 
                             // check if nested objects are getting parsed, if not convert this into a function and use recursion //
@@ -203,6 +209,9 @@ program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
 module.exports =  endpoints;
 
 // TODO:
-// Handle AliasSymbol
-// Refactor Code with better functions
-// Then focus on other edge cases like PaginatedResults
+// Add Schemas automatically and also handle
+// Handle multi AliasSymbol
+
+// Then focus on other edge cases like:
+// PaginatedResults, Pick<>
+// /v1/users.resetE2EKey

@@ -1,9 +1,9 @@
 import { oas31 } from 'openapi3-ts';
 import * as fs from 'fs';
 import * as path from 'path';
-import { schemas } from './schemas';
+import { schemas } from '../output/schemas';
 
-const apiData: ApiData = require('./expCompiler');
+const apiData: ApiData = require('./compiler');
 
 export interface MethodData {
     params?: Record<string, string>;
@@ -92,12 +92,22 @@ const createResponseSchema = (response: Record<string, any>): oas31.SchemaObject
 
     for (const [key, value] of Object.entries(response || {})) {
         let $ref = value;
-        // use logic here: If it starts with "I" the use appropriate schema, if it has ["id"] parse it as string //
-        if(["IRoom[]", "IRoom"].includes(value)){
-            $ref = "#/components/schemas/IRoom"
-        }else if(["IUser[]", "IUser"].includes(value)){
-            $ref = "#/components/schemas/IUser"
+        const regex = /^I[A-Z]/u;
+        if(regex.test(value)){
+            const stringRegex = /\[\s*'[^']*'\s*\]/;
+            if(stringRegex.test(value)){
+                $ref = 'string';
+            }else{
+                $ref = `#/components/schemas/${value}`
+                if($ref.endsWith('[]')){
+                    $ref = $ref.slice(0, -2);
+                }
+
+                const unwantedPattern = /\s*\|\s*(null|undefined)/g;
+                if(unwantedPattern.test($ref)) $ref = $ref.replace(unwantedPattern,'');
+            } 
         }
+        
         responseSchema.properties![key] = { $ref };
     }
 
@@ -168,8 +178,8 @@ const openApiDoc = generateApiDoc(apiData);
 const JsonDoc = JSON.stringify(openApiDoc, null, 2);
 
 // Code to output generated file to folder
-const outputFolder = path.join(__dirname, '../oas');
-const outputFilePath = path.join(outputFolder, `openapispec.json`);
+const outputFolder = path.join(__dirname, '../output');
+const outputFilePath = path.join(outputFolder, `apiDocs.json`);
 
 if (!fs.existsSync(outputFolder)) {
     fs.mkdirSync(outputFolder);
