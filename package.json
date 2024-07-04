@@ -5,7 +5,7 @@
   "author": "Akshun-01 <akshunkuthiala2002@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "tsx src/scripts/converter.ts"
+    "start": "tsx src/scripts/compiler.ts"
   },
   "dependencies": {
     "@typescript-eslint/parser": "^7.13.0",
@@ -15,7 +15,8 @@
     "js-yaml": "^4.1.0",
     "openapi3-ts": "^4.3.3",
     "tsx": "^4.15.4",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "typescript-json-schema": "^0.64.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

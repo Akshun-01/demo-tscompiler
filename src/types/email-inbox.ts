@@ -166,7 +166,7 @@ export type EmailInboxEndpoints = {
 	};
 
 	'/v1/email-inbox/:_id': {
-		GET: () => IEmailInbox | null;
+		GET: () => {emailInbox: IEmailInbox | null};
 		DELETE: () => { _id: string };
 	};
 

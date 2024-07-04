@@ -1,217 +1,294 @@
 import * as path from "path";
-import * as ts from 'typescript';
+import * as ts from "typescript";
 
-const fileName = path.join(__dirname, '../scripts/sourcefiles.ts');
-
+const fileName = path.join(__dirname, "../scripts/sourcefiles.ts");
 const fileContent = ts.sys.readFile(fileName);
-
 if (!fileContent) {
-    console.error(`Could not read file: ${fileName}`);
-    process.exit(1);
+  console.error(`Could not read file: ${fileName}`);
+  process.exit(1);
 }
 
-const sourceFile = ts.createSourceFile(fileName, fileContent, ts.ScriptTarget.Latest, true);
-
-const program = ts.createProgram([fileName],{
-    target: ts.ScriptTarget.ESNext,
-    module: ts.ModuleKind.CommonJS
-})
-
+const program = ts.createProgram([fileName], {
+  target: ts.ScriptTarget.ESNext,
+  module: ts.ModuleKind.CommonJS,
+});
 const checker = program.getTypeChecker();
 
-// Add cache for already processed types
-const processedTypes = new Map<string, any>(); 
-
-const extractReferencedNode = (typeNode: ts.Identifier) => {
-    if(!typeNode) return {};
-
-    let params:any = {};
-    const symbol = checker.getSymbolAtLocation(typeNode)
-    if (!symbol) return typeNode.getText();
-    
-    // need to check if "aliasSymbol" exists from the getTypeAtLocation() function
-    // if symbol and aliasSymbol are different first get the referenced parent symbol then parse
-
-    symbol.declarations?.map(sym => {
-        if(ts.isTypeAliasDeclaration(sym) && sym.name && ts.isIdentifier(sym.name)){
-            let temp:any = {};
-
-            // handle case for union type => add them to array
-            // and these types can be nested so its better to write a recursive function rather than handling with if else // 
-            if(ts.isTypeReferenceNode(sym.type)){
-                const symbolType = sym.type as ts.TypeReferenceNode;            
-
-                symbolType.typeArguments?.forEach(symbolTypeArguments => {
-                    if(ts.isTypeLiteralNode(symbolTypeArguments)){
-                        symbolTypeArguments.members.forEach(symbolMember => {
-                            if(ts.isPropertySignature(symbolMember) && symbolMember.name && ts.isIdentifier(symbolMember.name)){
-                                const key = symbolMember.name.text;
-                                const type = checker.getTypeAtLocation(symbolMember.type!)
-                                const value = checker.typeToString(type);
-                                temp[key] = value;
-                                
-                                Object.assign(params, temp);
-                            }
-                        })
-                    }
-                })
-            }else{
-                const symbolType = sym.type as ts.TypeLiteralNode; 
-    
-                symbolType.members?.forEach(symbolMember => {
-                    if(ts.isPropertySignature(symbolMember) && symbolMember.name && ts.isIdentifier(symbolMember.name)){
-                        const key = symbolMember.name.text;
-                        const type = checker.getTypeAtLocation(symbolMember.type!)
-                        const value = checker.typeToString(type);
-                        temp[key] = value;
-                        
-                        Object.assign(params, temp);
-                    }
-                })
-            }
+/* ###################################################################################### */
+const extractLiteralNode = (typeNode: ts.TypeLiteralNode, properties: any = {}) => {
+    if (!typeNode) return {};
+  
+    typeNode.members.forEach((member) => {
+      if (ts.isPropertySignature(member) && member.name && ts.isIdentifier(member.name)) {
+        const key = member.name.text;
+        const type = member.type;
+        if(!type){
+          console.error(`Type value not present at: ${key}`);
+          return;
         }
-    })    
-        
-    return params;
-}
 
-const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
-    const regex = /.*Endpoints$/;
+        const temp:any = {};
+        if(ts.isTypeLiteralNode(type)){
+          const subTemp:any = {};
+          extractLiteralNode(type, subTemp);
+          temp[key] = subTemp;
+        }else{
+          const valueType = checker.getTypeAtLocation(type);
+          const value = checker.typeToString(valueType);
+          temp[key] = value;
+        }
 
-    if (ts.isTypeAliasDeclaration(node) && regex.test(node.name.text)) {
-        const typeLiteral = node.type as ts.TypeLiteralNode;
-
-        typeLiteral.members.forEach(member => {
-            if (ts.isPropertySignature(member) && member.name && ts.isStringLiteral(member.name)) {
-                const key = member.name.text;
-                const methodType = member.type as ts.TypeLiteralNode;
-
-                endpoints[key] = {};
-
-                methodType.members.forEach(methodMember => {
-                    if (ts.isPropertySignature(methodMember) && methodMember.name && ts.isIdentifier(methodMember.name)) {
-                        const methodName = methodMember.name.escapedText as string;
-                        const method = methodMember.type as ts.FunctionTypeNode;
-
-                        let params = {};                       
-                        method.parameters.map(param => {
-                            if(ts.isTypeReferenceNode(param.type!)){
-                                const paramType = param.type as ts.TypeReferenceNode;
-                                const paramTypeName = paramType.typeName as ts.Identifier;
-                                
-                                const paramMembers = extractReferencedNode(paramTypeName);
-                                Object.assign(params, paramMembers);
-                            }else{
-                                const paramType = param.type as ts.TypeLiteralNode;
-                                // check if nested objects are getting parsed, if not convert this into a function and use recursion // 
-                                if(typeof(paramType.members)==="object"){
-                                    paramType.members.forEach(paramMember => {
-                                        if(ts.isPropertySignature(paramMember) && paramMember.name && ts.isIdentifier(paramMember.name)){
-                                            const paramKey = paramMember.name.escapedText as string;
-                                            const paramValue = paramMember.type?.getText();
-    
-                                            const temp:any = {};
-                                            temp[paramKey] = paramValue;
-                                            Object.assign(params, temp);
-                                        }
-                                    })
-                                }
-                            }
-                        });
-
-                        let response: any = {};
-                        // can also be of union type //
-                        if(ts.isTypeReferenceNode(method.type)){
-                            // here we we handle IMessage and PaginatedResults
-                            const responseType = method.type as ts.TypeReferenceNode;
-                            const value = responseType.getText();
-                            
-                            response = value;
-                        }else if(ts.isTypeLiteralNode(method.type)){
-                            const responseType = method.type as ts.TypeLiteralNode;
-
-                            // check if nested objects are getting parsed, if not convert this into a function and use recursion //
-                            if(typeof(responseType.members)==="object"){
-                                responseType.members.map( res => {
-                                    if(ts.isPropertySignature(res) && res.name && ts.isIdentifier(res.name)){
-                                        const key = res.name?.getText();
-                                        const resType = res.type as ts.ArrayTypeNode;
-                                        const val = resType.getText();
-                                    
-                                        const temp:any = {};
-                                        temp[key] = val;
-                                        Object.assign(response, temp);
-                                    }
-                                })
-                            }
-                        }else if(ts.isUnionTypeNode(method.type)){
-                            const responseTypes = method.type as ts.UnionTypeNode;
-
-                            const types:any = [];
-                            responseTypes.types.forEach(responseType => {
-                                let temp:any = {}
-                                if(ts.isTypeLiteralNode(responseType)){
-                                   responseType.members.forEach(res => {
-                                        if(ts.isPropertySignature(res) && res.name && ts.isIdentifier(res.name)){
-                                            const key = res.name.text;
-                                            const type = checker.getTypeAtLocation(res.type!)
-                                            const value = checker.typeToString(type);
-                                            temp[key] = value;
-                                        }
-                                   })
-                                }else{
-                                    // nullish or simple type
-                                    const type = checker.getTypeAtLocation(responseType)
-                                    const value = checker.typeToString(type);
-                                    temp = value;
-                                }
-
-                                types.push(temp);
-                            })
-
-                            Object.assign(response, types);
-                        }
-                        
-                        endpoints[key][methodName] = {
-                            params,
-                            response
-                        };
-                    }
-                });
-            }
-        });
-    }
-
-    ts.forEachChild(node, childNode => extractEndpoints(childNode, endpoints));
+        Object.assign(properties, temp)
+      }
+    });
 };
 
-function getFormatedFilename(path:string) {
-    const parts = path.split('/');
-    const filenameWithExtension = parts.pop();
-  
-    if(!filenameWithExtension) return console.error("No fileName Found");
-    const filename = filenameWithExtension.replace(/\.[^/.]+$/, "Endpoints");
-  
-    return filename;
+const extractImportedNode = (typenode: ts.ImportSpecifier, params:any = {}) => {
+  let importedSymbol = checker.getSymbolAtLocation(typenode.name);
+  if(!importedSymbol) return typenode.getText();
+
+  const importedAliasSymbol = checker.getAliasedSymbol(importedSymbol);
+  const declarations = importedAliasSymbol.getDeclarations();
+
+  if(!declarations) return typenode.getText();
+
+  declarations.forEach((sym) => {
+    let temp: any = {};
+    if(ts.isTypeAliasDeclaration(sym) && sym.name && ts.isIdentifier(sym.name)) {
+      const symbolType = sym.type;
+      if (!symbolType) return {};
+
+      if (ts.isTypeReferenceNode(symbolType)) {
+          extractReferencedNode(symbolType, temp);
+      } else if (ts.isTypeLiteralNode(symbolType)) {
+        extractLiteralNode(symbolType, temp);
+      } else if (ts.isUnionTypeNode(symbolType)) {
+          const unionArr:any = [];
+          symbolType.types.forEach(type => {
+              const unionTemp:any = {};
+              if(ts.isTypeLiteralNode(type)){
+                  extractLiteralNode(type, unionTemp);
+              }else if(ts.isTypeReferenceNode(type)){
+                  extractReferencedNode(type, unionTemp);
+              }
+              unionArr.push(unionTemp);
+          })
+          temp["unionTypes"] = unionArr;
+      }
+
+    }
+    Object.assign(params, temp);
+  });
+
 }
 
-const endpoints:any = {};
-program.getSourceFiles().filter(file=>!file.isDeclarationFile).map(f=> {
-    const filename:string = getFormatedFilename(f.fileName) as string;
+const processedTypes = new Map<string, any>(); // Add cache for already processed types
+const extractReferencedNode = (typeNode: ts.TypeReferenceNode,params: any = {}) => {
+  if (!typeNode) return {};
+
+  if (typeNode.typeArguments) {
+    // it is from symbol and we need to extract and return
+    typeNode.typeArguments.forEach((arg) => {
+        if(ts.isTypeLiteralNode(arg)) {
+            extractLiteralNode(arg, params);
+        }else if(ts.isTypeReferenceNode(arg)){
+            extractReferencedNode(arg, params);
+        }
+    });
+  } else {
+    // get symbol and parse it //
+    const typeIdentifier = typeNode.typeName;
+    let symbol = checker.getSymbolAtLocation(typeIdentifier);
+    if (!symbol) return typeNode.getText();
+
+    const type = checker.getTypeAtLocation(typeNode);
+    const aliasSymbol = type.aliasSymbol;
+    if(aliasSymbol && (typeIdentifier.getText() !== aliasSymbol?.escapedName)){
+        symbol = aliasSymbol;
+    }
+
+    symbol.declarations?.forEach((sym) => {
+      let temp: any = {};
+
+      if(ts.isImportSpecifier(sym) && sym.name && ts.isIdentifier(sym.name)){
+        extractImportedNode(sym, temp);
+      }else if(ts.isTypeAliasDeclaration(sym) && sym.name && ts.isIdentifier(sym.name)) {
+        const symbolType = sym.type;
+        if (!symbolType) return {};
+
+        if (ts.isTypeReferenceNode(symbolType)) {
+            extractReferencedNode(symbolType, temp);
+        } else if (ts.isTypeLiteralNode(symbolType)) {
+          extractLiteralNode(symbolType, temp);
+        } else if (ts.isUnionTypeNode(symbolType)) {
+            const unionArr:any = [];
+            symbolType.types.forEach(type => {
+                const unionTemp:any = {};
+                if(ts.isTypeLiteralNode(type)){
+                    extractLiteralNode(type, unionTemp);
+                }else if(ts.isTypeReferenceNode(type)){
+                    extractReferencedNode(type, unionTemp);
+                }
+                unionArr.push(unionTemp);
+            })
+            temp["unionTypes"] = unionArr;
+        }
+
+      }
+      Object.assign(params, temp);
+    });
+  }
+};
+
+const extractParameters = (method: ts.FunctionTypeNode, params: any = {}) => {
+  method.parameters.map((param) => {
+    const paramType = param.type;
+    if (!paramType) {
+      console.error("Param Type Not Found!");
+      return {};
+    }
+
+    const tempParam: any = {};
+    if (ts.isTypeReferenceNode(paramType)) {
+      extractReferencedNode(paramType, tempParam);
+    } else if (ts.isTypeLiteralNode(paramType)) {
+      extractLiteralNode(paramType, tempParam);
+    } else if (ts.isUnionTypeNode(paramType)) {
+        const unionArr:any = [];
+        paramType.types.forEach(type => {
+            const unionTemp:any = {};
+            if(ts.isTypeLiteralNode(type)){
+                extractLiteralNode(type, unionTemp);
+            }else if(ts.isTypeReferenceNode(type)){
+                extractReferencedNode(type, unionTemp);
+            }
+            unionArr.push(unionTemp);
+        })
+        tempParam["unionTypes"] = unionArr;
+    }
+
+    Object.assign(params, tempParam);
+  });
+};
+
+const extractResponses = (method: ts.FunctionTypeNode, response: any = {}) => {
+    const responseType = method.type;
+    if(!responseType){
+        console.error("Response Not Found");
+        return {};
+    }
+
+    const tempRes:any = {};
+    if (ts.isTypeReferenceNode(responseType)) {
+    // for: PaginatedResults & PaginatedResponse
+        extractReferencedNode(responseType, tempRes); //need to check if this works or we need a different funtion //
+    } else if (ts.isTypeLiteralNode(responseType)) {
+        extractLiteralNode(responseType, tempRes);
+    } else if (ts.isUnionTypeNode(responseType)) {
+        const unionArr:any = [];
+            responseType.types.forEach(type => {
+                const unionTemp:any = {};
+                if(ts.isTypeLiteralNode(type)){
+                    extractLiteralNode(type, unionTemp);
+                }else if(ts.isTypeReferenceNode(type)){
+                    extractReferencedNode(type, unionTemp);
+                }
+                unionArr.push(unionTemp);
+            })
+            tempRes["unionTypes"] = unionArr;
+    }
+
+    Object.assign(response, tempRes);
+};
+
+const extractEndpoints = (node: ts.Node, endpoints: any = {}) => {
+  const regex = /.*Endpoints$/;
+
+  if (ts.isTypeAliasDeclaration(node) && regex.test(node.name.text)) {
+    const endpointType = node.type as ts.TypeLiteralNode;
+
+    endpointType.members.forEach((member) => {
+      if (
+        ts.isPropertySignature(member) &&
+        member.name &&
+        ts.isStringLiteral(member.name)
+      ) {
+        const apiPath = member.name.text;
+        const methodType = member.type as ts.TypeLiteralNode;
+
+        endpoints[apiPath] = {};
+
+        methodType.members.forEach((methodMember) => {
+          if (
+            ts.isPropertySignature(methodMember) &&
+            methodMember.name &&
+            ts.isIdentifier(methodMember.name)
+          ) {
+            const methodName = methodMember.name.text; // GET | POST | DELETE | PUT
+            const method = methodMember.type as ts.FunctionTypeNode;
+
+            let params = {};
+            extractParameters(method, params);
+
+            let response: any = {};
+            extractResponses(method, response);
+
+            endpoints[apiPath][methodName] = {
+              params,
+              response,
+            };
+          }
+        });
+      }
+    });
+  }
+
+  ts.forEachChild(node, (childNode) => extractEndpoints(childNode, endpoints));
+};
+
+function getFormatedFilename(path: string) {
+  const parts = path.split("/");
+  const filenameWithExtension = parts.pop();
+
+  if (!filenameWithExtension) return console.error("No fileName Found");
+  const filename = filenameWithExtension.replace(/\.[^/.]+$/, " Endpoints");
+
+  return filename.toUpperCase();
+}
+
+const endpoints: any = {};
+program
+  .getSourceFiles()
+  .filter((file) => !file.isDeclarationFile)
+  .map((f) => {
+    const filename: string = getFormatedFilename(f.fileName) as string;
     const temp = {};
     extractEndpoints(f, temp);
-    
-    if(Object.keys(temp).length) endpoints[filename] = temp;
-});
 
-// console.log(JSON.stringify(endpoints));
+    if (Object.keys(temp).length) endpoints[filename] = temp;
+  });
 
-module.exports =  endpoints;
+console.log(JSON.stringify(endpoints));
+
+module.exports = endpoints;
 
 // TODO:
-// Add Schemas automatically and also handle
-// Handle multi AliasSymbol
+// Add Schemas automatically
+// PaginatedResults, Pick<> => in TypeReference of response
 
-// Then focus on other edge cases like:
-// PaginatedResults, Pick<>
-// /v1/users.resetE2EKey
+
+
+/* CUSTOM SCRIPT FOR EXTRACTING AND STORING SCHEMAS */
+
+// const extractSchema = (node: ts.Node) => {
+//     const regex = /^I[A-Z]/u;
+
+//     if(ts.isInterfaceDeclaration(node) && regex.test(node.name.text)){
+//         console.log(node.name.text);
+//     }
+
+//     ts.forEachChild(node, childNode => extractSchema(childNode));
+// }
+// program.getSourceFiles().filter(file=>file.isDeclarationFile).map(f => {
+//     extractSchema(f);
+// })

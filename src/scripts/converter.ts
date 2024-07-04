@@ -103,7 +103,7 @@ const createResponseSchema = (response: Record<string, any>): oas31.SchemaObject
                     $ref = $ref.slice(0, -2);
                 }
 
-                const unwantedPattern = /\s*\|\s*(null|undefined)/g;
+                const unwantedPattern = /\s*\|\s*(null|undefined)/g; // if | null exists then it is not in required //
                 if(unwantedPattern.test($ref)) $ref = $ref.replace(unwantedPattern,'');
             } 
         }
